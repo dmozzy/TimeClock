@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>TimeClock - Ethereum based service delivery contract with escrow</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="./app.css" rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Raleway:200">
+    <script src="./app.js"></script>
+</head>
+
+<body id="body">
+    <h1>Timeclock - Ethereum based service delivery contract with escrow</h1>
+    <form name="contractSelection" class="pure-form">
+        <fieldset>
+            <span>TimeClock contract</span>
+            <input type="text" name="timeClockContract" placeholder="timeClockContract" size="64" maxlength="64" required/>
+            <button type="button" id="send" onclick="displayContract()" class="pure-button pure-button-primary">Display Contract</button>
+        </fieldset>
+    </form>
+
+    <div id="templateInsert"></div>
+        <script type="x-template"  id="template">
+
+    {{#hasPendingTransactions}}
+      <h2>Pending Transactions</h2>
+      <form name="pendingTransactions" class="pure-form">
+          <fieldset>
+              <legend>My transactions that are pending</legend>
+
+              <table class="pure-table">
+                  <thead>
+                      <tr>
+                          <th>Type</th>
+                          <th>Amount</th>
+                          <th>Description</th>
+                          <th>Status</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      {{#pendingTransactions}}
+                      <tr class="{{class}}">
+                        <td>{{type}}</td>
+                        <td>{{amount}}</td>
+                        <td>{{description}}</td>
+                        <td>{{status}}</td>
+                      </tr>
+                      {{/pendingTransactions}}
+                  </tbody>
+              </table>
+          </fieldset>
+      </form>
+    {{/hasPendingTransactions}}
+
+    <h2>Configuration</h2>
+    <form name="globalState" class="pure-form">
+        <fieldset>
+            <legend>Shows the configuration of this contract</legend>
+
+            <div class="pure-g">
+                <div class="pure-u-1-2">Contract Details</div>
+                <div class="pure-u-1-2">{{contractDetails}}</div>
+                <div class="pure-u-1-2">Start time:</div>
+                <div class="pure-u-1-2">{{startTime}}</div>
+                <div class="pure-u-1-2">Payment Interval</div>
+                <div class="pure-u-1-2">{{paymentInterval}}</div>
+                <div class="pure-u-1-2">Total Payments</div>
+                <div class="pure-u-1-2">{{paymentsCount}}</div>
+                <div class="pure-u-1-2">Contractor Address</div>
+                <div class="pure-u-1-2">{{contractorAddress}}</div>
+                <div class="pure-u-1-2">Minimum Payment</div>
+                <div class="pure-u-1-2">{{minimumPayment}} ether</div>
+            </div>
+        </fieldset>
+    </form>
+    <h2>Current state</h2>
+
+    <form name="currentState" class="pure-form">
+        <fieldset>
+            <legend>Shows the state of the contract and enables update and withdraws to be triggered</legend>
+
+            <div class="pure-g">
+                <div class="pure-u-1-2">Next update time</div>
+                <div class="pure-u-1-2">{{nextPaymentTime}}</div>
+                <div class="pure-u-1-2">Current Payment #</div>
+                <div class="pure-u-1-2">{{currentPaymentsCount}}</div>
+                <div class="pure-u-1-2">Contractees Size</div>
+                <div class="pure-u-1-2">{{contracteesSize}}</div>
+                <div class="pure-u-1-2">Ether in Escrow</div>
+                <div class="pure-u-1-2">{{amountInEscrow}}</div>
+                <div class="pure-u-1-2">Contractor Withdrawable</div>
+                <div class="pure-u-1-2">{{contractorBalance}}</div>
+                <div class="pure-u-1-1">&nbsp;</div>
+            </div>
+    </form>
+    <button type="button" class="pure-button pure-button-primary" id="refresh" onclick="refreshDisplay()">Refresh</button>
+    {{#allowUpdate}}
+      <a class="pure-button pure-button-primary" href='#' onclick="overlay('updateDialog')">Update Contract</a>
+    {{/allowUpdate}}
+    <a class="pure-button pure-button-primary" href='#' onclick="overlay('contractorWithdrawDialog')">Contractor Withdraw</a>
+    <a class="pure-button pure-button-primary" href='#' onclick="overlay('payDialog')">Pay into Contract</a>
+    <br/><br/>
+
+      <h2>Contractees</h2>
+    <form name="existingContractees" class="pure-form">
+        <fieldset>
+            <legend>List existing contratees and enables them to withdraw</legend>
+
+            <table class="pure-table">
+                <thead>
+                    <tr>
+                        <th>Address</th>
+                        <th>Balance</th>
+                        <th>Description</th>
+                        <th>&nbsp;</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#contractees}}
+                    <tr>
+                        <td>{{address}}</td>
+                        <td>{{balance}}</td>
+                        <td>{{description}}</td>
+                        <td>
+                            {{#isContractee}}
+                            <a class="pure-button button-cancel" href='#' onclick="document.forms['contracteeWithdrawForm'].withdrawIndex.value = '{{index}}'; document.forms['contracteeWithdrawForm'].withdrawAddress.value = '{{address}}'; overlay('contracteeWithdrawDialog')">Withdraw</a>
+                            {{/isContractee}}
+                        </td>
+                    </tr>
+                    {{/contractees}}
+                </tbody>
+            </table>
+        </fieldset>
+    </form>
+
+
+
+    <div id="updateDialog" class="dialogFrame">
+        <div class="dialogBody">
+            <h2>Update Contract</h2>
+            <form name="updateContractForm" class="pure-form pure-form-aligned" action="javascript:updateContract()">
+                <fieldset>
+                    <legend>
+                        This will trigger the next update of the contract. This will transfer balances from the contractees to the escrow and from the escrow to the contractor.
+                        <br />Note: You will have to pay for the gas to perform this action and <b>the account must be unlocked.</b>
+                    </legend>
+                    <div class="pure-control-group">
+                        <label for="accountToPayFrom">Gas Payment Account</label>
+                        <select name="accountToPayFrom" placeholder="Account">
+                          {{#accounts}}
+                          <option>{{.}}</option>
+                          {{/accounts}}
+                        </select>
+                    </div>
+
+                    <div class="pure-control-group">
+                        <label for="gasAmount">Gas Amount (ether)</label>
+                        <input type="number" name="gasAmount" step="1" placeholder="Amount" min="50000" value="2000000" required/>
+                    </div>
+
+                    <div class="pure-controls">
+                        <button type="submit" id="send" class="pure-button pure-button-primary">Update Contract</button>
+                        <button type="button" onclick="overlay('updateDialog')" class="button-cancel pure-button">Cancel</button>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+
+    <div id="contractorWithdrawDialog" class="dialogFrame">
+        <div class="dialogBody">
+            <h2>Contractor Withdraw</h2>
+            <form name="contractorWithdrawForm" action="javascript:contractorWithdraw()" class="pure-form pure-form-aligned">
+                <fieldset>
+                    <legend>
+                          This will transfer all withdrawable funds to the contractor.
+                          <br />Note: You will have to pay for the gas to perform this action and <b>the account must be unlocked.</b>
+                    </legend>
+                    <div class="pure-control-group">
+                        <label for="accountToPayFrom">Gas Payment Account</label>
+                        <select name="accountToPayFrom" placeholder="Account">
+                          {{#accounts}}
+                            <option>{{.}}</option>
+                          {{/accounts}}
+                        </select>
+                    </div>
+
+                    <div class="pure-control-group">
+                        <label for="gasAmount">Gas Amount (ether)</label>
+                        <input type="number" name="gasAmount" step="1" placeholder="Amount" min="50000" value="100000" required/>
+                    </div>
+
+                    <div class="pure-controls">
+                        <button type="submit" id="send" class="pure-button pure-button-primary">Withdraw</button>
+                        <button type="button" onclick="overlay('contractorWithdrawDialog')" class="button-cancel pure-button">Cancel</button>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+
+    <div id="contracteeWithdrawDialog" class="dialogFrame">
+        <div class="dialogBody">
+            <h2>Contractee Withdraw</h2>
+            <form name="contracteeWithdrawForm" class="pure-form pure-form-aligned" action="javascript:contracteeWithdraw()">
+                <fieldset>
+                    <legend>
+                        <b>
+                          Are you sure you want to withdraw your remaining balance from this TimeClock contract?
+                          <br /><br /> Note: You will have to pay for the gas to perform this action and <b>the account must be unlocked</b>.
+                        </b>
+                    </legend>
+                    <input type="hidden" name="withdrawIndex"/>
+                    <div class="pure-control-group">
+                        <label for="withdrawAddress">Withdraw Account</label>
+                        <input type="text" name="withdrawAddress" size="64" readonly/>
+                    </div>
+                    <div class="pure-control-group">
+                        <label for="gasAmount">Gas Amount (ether)</label>
+                        <input type="number" name="gasAmount" step="0.001" placeholder="Amount" min="50000" value="100000" required/>
+                    </div>
+
+                    <div class="pure-controls">
+                        <button type="submit" id="send" class="pure-button pure-button-primary">Withdraw</button>
+                        <button type="button" onclick="overlay('contracteeWithdrawDialog')" class="button-cancel pure-button">Cancel</button>
+                    </div>
+
+                </fieldset>
+              </form>
+        </div>
+    </div>
+
+
+    <div id="payDialog" class="dialogFrame">
+        <div class="dialogBody">
+            <h2>Pay</h2>
+            <form name="timeClockForm" class="pure-form pure-form-aligned" action="javascript:pay()">
+                <fieldset>
+                    <legend>Pay ether into this contract. Note:
+                        <ul>
+                          <li>A portion of this transfer will go directly into the escrow balance and will not be withdrawable by you.</li>
+                          <li>You will have to pay for the gas to perform this action and <b>the account must be unlocked.</b></li>
+                        </ul>
+                    </legend>
+                    <div class="pure-control-group">
+                        <label for="accountToPayFrom">Payment Account</label>
+                        <select name="accountToPayFrom" placeholder="Account">
+                          {{#accounts}}
+                          <option>{{.}}</option>
+                          {{/accounts}}
+                        </select>
+                    </div>
+                    <div class="pure-control-group">
+                        <label for="paymentAmount">Amount (ether)</label>
+                        <input type="number" name="paymentAmount" min="1" step="0.01" placeholder="Amount" min={{minimumPayment}} required/>
+                    </div>
+                    <div class="pure-control-group">
+                        <label for="paymentDescription">Payment Description</label>
+                        <input type="text" name="paymentDescription" placeholder="Description" maxlength="64" size="64" required/>
+                    </div>
+                    <div class="pure-control-group">
+                        <label for="gasAmount">Gas Amount</label>
+                        <input type="number" name="gasAmount" min="100000" step="1" value="250000" placeholder="Amount" min="{{minimumPayment}}" required/>
+                    </div>
+
+                    <div class="pure-controls">
+                        <button type="submit" id="send" class="pure-button pure-button-primary">Pay Into</button>
+                        <button type="button" onclick="overlay('payDialog')" class="button-cancel pure-button">Cancel</button>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+    </div>
+    </script>
+</body>
+
+</html>
