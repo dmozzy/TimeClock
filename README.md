@@ -38,6 +38,10 @@ Mary can withdraw any funds from her balance at any time. Bob can also withdraw 
 
 This continues for the remaining 9 intervals until all the money has been transferred from Bob to Mary and the website is complete.
 
+Example Contract
+----------------------
+There is a Test Contract deployed at 0x566d8A075D55122CC19Ad09006114B7B656E6596 on the main ethernet chain. This is a payment to itself that pays out every 7 days for a total of 10 payments.
+
 Future Ideas
 ------------
 
