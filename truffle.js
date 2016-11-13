@@ -8,8 +8,7 @@ module.exports = {
     "app.css": [
       "stylesheets/pure-min.css",
       "stylesheets/app.css"
-    ],
-    "images/": "images/"
+    ]
   },
   rpc: {
     host: "localhost",

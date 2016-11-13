@@ -49,16 +49,17 @@ Future Ideas
 How to install and use (using geth and Ethereum Wallet)
 ----------------------
  1. Clone the repository from Github
- 2. Deploy the contract to an ethereum blockchain.  This can be done using Ethereum Mist Wallet by going to Contracts -> Deploy New Contract  and then pasting the contents of contracts/TimeClock.sol into the sources folder.
- 2. Select "Time Clock" in the "Select Contract to Deploy" selection
- 3. Enter values for the Constructor Parameters. Note "Minimum Payment" amount is in wei. I use http://ether.fund/tool/converter to get the wei amount to enter.
- 4. Deploy the contract and make note of the contract address
- 5. Go into the root of where you downloaded the Time Clock repo.
- 6. Run "truffle build"
- 7. Run "truffle server -p 8082"
- 8. In your browser navigate to "http://localhost:8082"
- 9. Enter the contract address in the "Timeclock contract" text field and click "Display Contract"
- 10. Note: To trigger any actions on the contract you will need to unlock the account in your geth console
+ 1. Deploy the contract to an ethereum blockchain.  This can be done using Ethereum Mist Wallet by going to Contracts -> Deploy New Contract  and then pasting the contents of contracts/TimeClock.sol into the sources folder.
+ 1. Select "Time Clock" in the "Select Contract to Deploy" selection
+ 1. Enter values for the Constructor Parameters. Note "Minimum Payment" amount is in wei. I use http://ether.fund/tool/converter to get the wei amount to enter.
+ 1. Deploy the contract and make note of the contract address
+ 1. Go into the root of where you downloaded the Time Clock repo.
+ 1. Make sure truffle is installed (npm install -g truffle)
+ 1. Run "truffle build"
+ 1. Run "truffle server -p 8082"
+ 1. In your browser navigate to "http://localhost:8082"
+ 1. Enter the contract address in the "Timeclock contract" text field and click "Display Contract"
+ 1. Note: To trigger any actions on the contract you will need to unlock the account in your geth console
 
 Building
 ----------------------
