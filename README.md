@@ -3,7 +3,7 @@ TimeClock - Ethereum based service delivery contract with escrow
 
 Overview
 --------
-TimeClock is a prototype/proof of concept smart contract and javascript interface that enables one to setup a Contractor and Contractee relationship for the delivery of services.
+TimeClock is a prototype/proof of concept smart contract and javascript/html interface that enables one to setup a Contractor and Contractee relationship for the delivery of services.
 
 TimeClock is written in Solidity and makes heavy use of Truffle. It can be deployed on any Ethereum block chain.
 
@@ -22,12 +22,12 @@ Bob (the contractee) wants to hire Mary (the contractor) to build a website for 
 Mary sets up a TimeClock contract with the following properties:
 
  1. Contract Details = Bob's Gardening Website build
- 2. Start Interval Seconds = 86400 - The contract will start in 24 hours (in seconds)
- 3. Payment Interval Seconds = 604800 - The Payment Interval is 1 week (in seconds)
+ 2. Start Interval Seconds = 86400 - The contract will start in 24 hours (entered in seconds)
+ 3. Payment Interval Seconds = 604800 - The Payment Interval is 1 week (entered in seconds)
  4. Payments Count = 10
- 5. Minimum Payment = 1 ether (Note: this doesn't stop Bob paying more, it just stops someone spamming small payments to the contract)
+ 5. Minimum Payment = 1000000000000000000 (This is 1 ether in wei. Note: this doesn't stop Bob paying more, it just stops someone spamming small payments to the contract)
 
-Bob deposits the full payment of 1000 ether into the contract (10 payments of 100 ether). When Bob deposits the ether, 100 ether immediately goes into escrow. The other 900 ether stays in the Bob's balance in the contract. At anytime before the next payment, Bob can withdraw his remaining 900 ether and thus terminate the contract.
+Bob deposits the full payment of 1000 ether into the contract (10 payments of 100 ether). When Bob deposits the ether, 100 ether immediately goes into escrow. The other 900 ether stays in Bob's balance in the contract. At anytime before the next payment, Bob can withdraw his remaining 900 ether and thus terminate the contract.
 
 In a weeks time - Mary will trigger the 'Update' function of the contract. This will do 2 things:
 
@@ -42,7 +42,7 @@ Future Ideas
 ------------
 
  - Sub TimeClock contracts. Enable one larger contract to pay into a smaller contract so as to enable large work to be split up and sub contractors employed.
- - Multiple Contractees (already allowed)
+ - Multiple Contractees (already allowed up to 100)
  - Use for crowd funding / foundations. E.g. a foundation is formed that sets up a TimeClock contract with 100 payments at a weekly interval. Donees can donate into the contract. As long as the donee is happy with the foundation, the donation will slowly move over to the foundations control every week. If at anytime the foundation breaks the trust of the donees, the donees can withdraw their remaining balance.
 
 
@@ -72,6 +72,10 @@ Notes
  3. A Contractee (new or existing) can pay ether into the contract at anytime. Ether will be transferred into escrow based on the number of intervals remaining. E.g. If there are 5 intervals remaining and Bob transfers another 5 ether into the contract, 1 ether will go into escrow and 4 ether will go into Bob's balance.
  4. Currently there is no sanity check on the time that is returned from block.timestamp. If this is a security gap, a check on the block number will be needed.
  5. There is a limit of 100 Contractees allowed for a contract and 1 Contractor. The 100 limit is to prevent the loop in the update function taking too long. I'm not sure if this is necessary or not?
+
+UI Screenshot
+-------
+![enter image description here](https://raw.githubusercontent.com/dmozzy/TimeClock/master/images/TimeClockScreenshot.png)
 
 Licence
 -------
