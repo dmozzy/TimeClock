@@ -105,7 +105,7 @@ function refreshDisplay() {
         console.log("size = " + size);
         for (var i = 0; i < size; i++) {
             (function(index) {
-              timeClock.getContractee.call(index, {
+              timeClock.contractees.call(index, {
                   from: window.account
               }).then(function(returned) {
                   if (returned[1] > 0) {

@@ -40,6 +40,9 @@ contract TimeClock {
     string description;
   }
 
+  //Reentrant mutex check state variable
+  bool mutex;
+
   /*****************************************************************************
   * Public Variables
   *****************************************************************************/
@@ -104,22 +107,23 @@ contract TimeClock {
   }
 
   /*****************************************************************************
+  * Modifiers see https://forum.ethereum.org/discussion/10889/my-first-contract-timeclock-service-delivery-labor-hire-contract#latest
+  *****************************************************************************/
+  modifier protected() {
+    if (mutex) throw;  // Checks if contract has already been entered.
+    mutex = true;
+    _;
+    delete mutex;  // sets to false and refunds some gas
+    return;
+  }
+
+  /*****************************************************************************
   * Public Read Functions
   *****************************************************************************/
   //Returns the next date at which update can be called. This may be in the past
   //meaning that update can be called now.
   function getNextPaymentDate() returns (uint){
     return startTime + ((currentPaymentsCount +1) * paymentInterval);
-  }
-
-  //Returns the details of a contractee by their index in the Contractees array
-  //return[0] - The Contractee address
-  //return[1] - The balance of the Contractee
-  //return[2] - The description the Contractee sent when paying into the contract
-  function getContractee (uint number) constant returns (address addressReturn, uint balanceReturn, string descriptionReturn) {
-    addressReturn = contractees[number].addr;
-    balanceReturn = contractees[number].balance;
-    descriptionReturn = contractees[number].description;
   }
 
   //Returns the highest populated number in the contractees Array
@@ -152,7 +156,7 @@ contract TimeClock {
   //description - The Contractees description (e.g. From Bob). Limited to 64 characters
   //msg.value - The amount paid into the contract
   //msg.address - The address of the Contractee and where any withdrawn funds will be deposited
-  function purchase(string description) payable {
+  function purchase(string description) protected payable {
     if(bytes(description).length>128) {
       throw;
     }
@@ -190,14 +194,12 @@ contract TimeClock {
     amountInEscrow += toEscrow;
 
     contractees[insertPosition] = Contractee(msg.sender, msg.value - toEscrow, description);
-    //contractees.push(Contractee(msg.sender, msg.value - toEscrow, description));
     Purchase(msg.sender, msg.value, description);
-
   }
 
   //This triggers the update of the contract and will only work if the current block.timestamp
   //is less than the next payment date
-  function update() {
+  function update() protected {
     uint _currentBlock = calculatedPaymentInterval();
 
     //The 15 seconds here are to allow the unit testing of this function without a delay
@@ -236,7 +238,7 @@ contract TimeClock {
   }
 
   //Enables a Contractee to withdraw any and all funds that are in their balance
-  function contracteeWithdraw(uint index) {
+  function contracteeWithdraw(uint index) protected {
     Contractee thisContractee = contractees[index];
     if(thisContractee.addr != msg.sender && contractorAddress != msg.sender) {
       throw;
@@ -254,7 +256,7 @@ contract TimeClock {
 
   //Enables a Contractor to withdraw any funds that have been moved over into
   //their balance
-  function contractorWithdraw() {
+  function contractorWithdraw() protected {
     uint amountToWithdraw = contractorBalance;
     contractorBalance = 0;
     if(!contractorAddress.send(amountToWithdraw)) {
